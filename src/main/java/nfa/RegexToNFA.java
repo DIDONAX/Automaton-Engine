@@ -117,12 +117,9 @@ public class RegexToNFA {
      */
     public static void printTree(Node root) {
         if (root == null) return;
-        System.out.println("nfa.Node " + root.value);
         if (root.left != null) {
-            System.out.println(root.value+"->"+root.left.value);
         }
         if (root.right != null) {
-            System.out.println(root.value+"->"+root.right.value);
         }
         printTree(root.left);
         printTree(root.right);
@@ -143,23 +140,16 @@ public class RegexToNFA {
        }
 
        for (Character ch : postfix.toCharArray()) {
-           System.out.println("LOOP FOR" + ch);
            if (isOperand(ch)) {
-               System.out.println("before: " + stack);
                stack.push(NFA.buildNFA(ch));
-               System.out.println("after: " + stack);
            } else if (ch == '|' || ch == '.') {
-               System.out.println("before: " + stack);
                NFA nfa1 = stack.pop();
                NFA nfa2 = stack.pop();
                NFA nfa3 = ch == '|' ? NFA.orOperation(nfa1,nfa2) : NFA.concatinateNFA(nfa2,nfa1);
                stack.push(nfa3);
-               System.out.println("after: " + stack);
            } else if (ch == '*') {
-               System.out.println("before: " + stack);
                NFA nfa3 = NFA.starOperation(stack.pop());
                stack.push(nfa3);
-               System.out.println("after: " + stack);
            }
        }
        return stack.peek();

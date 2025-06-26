@@ -83,13 +83,11 @@ public class NFA {
      */
     private Set<State> removeEpsilonStates(Set<State> states) {
         while (states.stream().anyMatch(s-> isEpsilonState(s))) {
-            System.out.println("Removing epsilon" + states);
             Set<State> epsilonStates = states.stream().filter(s-> isEpsilonState(s)).collect(Collectors.toSet());
             states = states.stream().filter(s-> !isEpsilonState(s)).collect(Collectors.toSet());
             for (State state : epsilonStates) {
                 states.addAll(transitionFunction.keySet().stream().filter(t -> t.getStartState().equals(state) && t.isEpsilon()).map(transitionFunction::get).flatMap(Set::stream).collect(Collectors.toSet()));
             }
-            System.out.println("Epsilon removed" + states);
         }
         return states;
     }
@@ -102,34 +100,71 @@ public class NFA {
     public Set<State> next(Set<State> states, char symbol) {
         states = removeEpsilonStates(states);
         Set<State> nextStates = new HashSet<>();
-        System.out.println("Before next for input"+symbol+ states);
         for (State state : states) {
             nextStates.addAll(transitionFunction.keySet().stream()
                     .filter(transition -> transition.getStartState().equals(state) && (transition.getSymbol() == symbol))
                     .map(transitionFunction::get).flatMap(Set::stream)
                     .collect(Collectors.toSet()));
-            System.out.println(nextStates);
         }
-        System.out.println("After next for input "+ symbol+ nextStates);
         return nextStates;
     }
+    /**
+     * Calculates the epsilon-closure for a set of states.
+     * The epsilon-closure is the set of all states reachable from the initial set using only epsilon transitions.
+     * @param states the set of states
+     * @return the set of states in the epsilon-closure
+     */
+    private Set<State> epsilonClosure(Set<State> states) {
+        Set<State> closure = new HashSet<>(states);
+        Stack<State> stack = new Stack<>();
+        states.forEach(stack::push);
+
+        while (!stack.isEmpty()) {
+            State s = stack.pop();
+            transitionFunction.keySet().stream()
+                    .filter(t -> t.getStartState().equals(s) && t.isEpsilon())
+                    .map(transitionFunction::get)
+                    .flatMap(Set::stream)
+                    .filter(closure::add) // Add state to closure, and if it was a new state...
+                    .forEach(stack::push);   // ...add it to the stack to process its epsilon transitions.
+        }
+        return closure;
+    }
+
+    /**
+     * Calculates the set of states reachable from a given set of states on a specific symbol, without following epsilon transitions.
+     * @param states the current set of states
+     * @param symbol the input symbol
+     * @return the set of next states
+     */
+    private Set<State> move(Set<State> states, char symbol) {
+        Set<State> nextStates = new HashSet<>();
+        for (State state : states) {
+            nextStates.addAll(transitionFunction.keySet().stream()
+                    .filter(transition -> transition.getStartState().equals(state) && !transition.isEpsilon() && (transition.getSymbol() == symbol))
+                    .map(transitionFunction::get).flatMap(Set::stream)
+                    .collect(Collectors.toSet()));
+        }
+        return nextStates;
+    }
+
     /**
      * Checks if the NFA accepts a given input string.
      * @param string the input string
      * @return true if the NFA accepts the string, false otherwise
      */
     public boolean accepts(String string) {
-        Set<State> current = Set.of(startState);
-        for (int i = 0; i < string.length(); i++) {
-            char ch = string.charAt(i);
-            System.out.println("TESTING FOR: " + ch);
-            if (!alphabet.contains(ch)) {
+        Set<State> currentStates = epsilonClosure(Set.of(startState));
+        for (char ch : string.toCharArray()) {
+            if (alphabet != null && !alphabet.contains(ch)) {
                 return false;
             }
-            current = next(current, ch);
-            System.out.println(current);
+            currentStates = move(currentStates, ch);
+            if (currentStates.isEmpty()) return false;
+            currentStates = epsilonClosure(currentStates);
         }
-        return !current.isEmpty() && current.stream().anyMatch(state -> finalStates.contains(state));
+        // Check for intersection with final states
+        return currentStates.stream().anyMatch(s -> finalStates.contains(s));
     }
     /**
      * Concatenates two NFAs into a new NFA.
@@ -166,9 +201,18 @@ public class NFA {
      * @return the resulting NFA
      */
     public static NFA starOperation(NFA a) {
-        NFA result = new NFA(a.getAlphabet(),a.getStates(),a.getStartState(),a.getTransitionFunction(),a.getFinalStates());
+        // Create a new transition function map to avoid mutating the original NFA.
+        Map<Transition, Set<State>> newTransitionFunc = new HashMap<>(a.getTransitionFunction());
+
+        // The new set of final states will include all original final states plus the start state.
+        Set<State> newFinalStates = new HashSet<>(a.getFinalStates());
+        newFinalStates.add(a.getStartState());
+
+        NFA result = new NFA(a.getAlphabet(), a.getStates(), a.getStartState(), newTransitionFunc, newFinalStates);
+
+        // Add epsilon transition from old final states back to the start state for the loop.
         for (State state : a.getFinalStates()) {
-            result.setTransition(new Transition(state),a.getStartState());
+            result.setTransition(new Transition(state), a.getStartState());
         }
         return result;
     }
@@ -182,8 +226,8 @@ public class NFA {
         Set<State> states = new HashSet<>(a.getStates());
         states.addAll(b.getStates());
         Alphabet alphabet = Alphabet.merge(a.getAlphabet(), b.getAlphabet());
-        a.getTransitionFunction().putAll(b.getTransitionFunction());
-        Map<Transition, Set<State>> delta = a.getTransitionFunction();
+        Map<Transition, Set<State>> delta = new HashMap<>(a.getTransitionFunction());
+        delta.putAll(b.getTransitionFunction());
         return new NFA(alphabet,states,null,delta,null);
     }
     /**
@@ -205,45 +249,70 @@ public class NFA {
         return result;
     }
     /**
-     * Checks if a state is in the destination set for all symbols (used in DFA conversion).
-     * @param statesMap the map of states to their destination sets
-     * @param state the state to check
-     * @return true if in the destination set, false otherwise
-     */
-    private boolean inDestinationSet(Map<State,Set<State>> statesMap, State state) {
-        return this.alphabet.getAlphabet().stream().allMatch(ch -> statesMap.containsValue(next(statesMap.get(state),ch)));
-    }
-    /**
      * Converts this NFA to a DFA using the subset construction algorithm.
      * @return the equivalent DFA as an NFA object
      */
     public NFA toDFA() {
-        Map<State,Set<State>> statesMap = new HashMap<>();
-        statesMap.put(startState,Set.of(startState));
-        Map<Transition,Set<State>> transitionMap = new HashMap<>();
-        NFA DFA = new NFA(alphabet,null,startState,transitionMap,null);
-        Set<Character> alphabet = this.alphabet.getAlphabet();
-        while (statesMap.keySet().stream().anyMatch(state -> !inDestinationSet(statesMap, state))) {
-            Iterator<Character> alphaIterator = alphabet.iterator();
-            Set<State> states = statesMap.keySet();
-            Iterator<State> statesIterator = states.iterator();
-            while (statesIterator.hasNext()) {
-                State currentState = statesIterator.next();
-                while (alphaIterator.hasNext()) {
-                    char ch = alphaIterator.next();
-                    if (!statesMap.containsValue(next(statesMap.get(currentState), ch))) {
-                        State state = new State("n");
-                        statesMap.put(state, next(statesMap.get(currentState), ch));
-                    }
-                    DFA.setTransition(new Transition(currentState),statesMap.entrySet().stream().filter(e -> e.getValue().equals(next(statesMap.get(currentState),ch))).findAny().get().getKey());
+        // This map tracks the relationship between a set of NFA states and the new DFA state.
+        Map<Set<State>, State> dfaStateMap = new HashMap<>();
+        // The worklist contains sets of NFA states that need to be processed.
+        Queue<Set<State>> worklist = new LinkedList<>();
+        // The transition function for the new DFA.
+        Map<Transition, Set<State>> dfaTransitionFunc = new HashMap<>();
+
+        // 1. Initial DFA state is the epsilon-closure of the NFA's start state.
+        Set<State> startStateSet = epsilonClosure(Set.of(this.startState));
+        if (startStateSet.isEmpty()) {
+            // Handle case where start state has no states after closure (e.g., empty NFA)
+            return new NFA(this.alphabet, new HashSet<>(), new State("empty"), new HashMap<>(), new HashSet<>());
+        }
+        State dfaStartState = new State(stateSetToName(startStateSet));
+        dfaStateMap.put(startStateSet, dfaStartState);
+        worklist.add(startStateSet);
+
+        while (!worklist.isEmpty()) {
+            Set<State> currentNfaStates = worklist.poll();
+            State currentDfaState = dfaStateMap.get(currentNfaStates);
+
+            for (char symbol : this.alphabet.getAlphabet()) {
+                Set<State> nextNfaStates = epsilonClosure(move(currentNfaStates, symbol));
+
+                if (nextNfaStates.isEmpty()) {
+                    continue; // No transition for this symbol
                 }
+                
+                State nextDfaState;
+                if (!dfaStateMap.containsKey(nextNfaStates)) {
+                    nextDfaState = new State(stateSetToName(nextNfaStates));
+                    dfaStateMap.put(nextNfaStates, nextDfaState);
+                    worklist.add(nextNfaStates);
+                } else {
+                    nextDfaState = dfaStateMap.get(nextNfaStates);
+                }
+                dfaTransitionFunc.put(new Transition(currentDfaState, symbol), Set.of(nextDfaState));
             }
         }
-        DFA.setStates(statesMap.keySet());
-        Set<State> DFAFinalStates = statesMap.entrySet().stream().filter(e -> e.getValue().stream().anyMatch(s -> finalStates.contains(s))).map(e -> e.getKey()).collect(Collectors.toSet());
-        DFA.setFinalStates(DFAFinalStates);
-        return DFA;
+
+        // Determine the final states of the DFA.
+        Set<State> dfaFinalStates = new HashSet<>();
+        for (Map.Entry<Set<State>, State> entry : dfaStateMap.entrySet()) {
+            Set<State> nfaStates = entry.getKey();
+            if (nfaStates.stream().anyMatch(this.finalStates::contains)) {
+                dfaFinalStates.add(entry.getValue());
+            }
+        }
+
+        return new NFA(this.alphabet, new HashSet<>(dfaStateMap.values()), dfaStartState, dfaTransitionFunc, dfaFinalStates);
     }
+
+    // Helper to create unique names for DFA states from sets of NFA states.
+    private String stateSetToName(Set<State> states) {
+        return states.stream()
+                .map(State::toString)
+                .sorted()
+                .collect(Collectors.joining(",", "{", "}"));
+    }
+
     /**
      * Adds a state to the NFA.
      * @param state the state to add

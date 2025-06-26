@@ -47,5 +47,6 @@ From your IDE:
 
 ## Future Improvements
 
+- **Enhanced Regex Syntax**: Add support for more advanced regex features like `+` (one or more), `?` (zero or one), and character classes (`[0-9]`).
 - **Robust Error Handling**: Implement custom exceptions for invalid regex syntax.
-- **Visualization**: Add functionality to export an automaton's structure to a format like Graphviz DOT for visualization. 
+- **Visualization**: Add functionality to export an automaton's structure to a format like Graphviz DOT for visualization.
