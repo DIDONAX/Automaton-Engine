@@ -1,4 +1,4 @@
-# NFA and Regex to NFA Converter
+# Automaton Engine
 
 This project provides a Java implementation for:
 - Converting regular expressions to Non-deterministic Finite Automata (NFA)
