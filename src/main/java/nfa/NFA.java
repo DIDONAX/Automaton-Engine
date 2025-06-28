@@ -36,12 +36,12 @@ public class NFA {
      * @param transitionFunction the transition function
      * @param finalState the set of final states
      */
-    public NFA(Set<State> states, State startState, Map<Transition,Set<State>> transitionFunction, Set<State> finalState) {
-        this.states = states;
-        this.transitionFunction = transitionFunction;
-        this.startState = startState;
-        this.finalStates = finalState;
-    }
+//    public NFA(Set<State> states, State startState, Map<Transition,Set<State>> transitionFunction, Set<State> finalState) {
+//        this.states = states;
+//        this.transitionFunction = transitionFunction;
+//        this.startState = startState;
+//        this.finalStates = finalState;
+//    }
     /**
      * Returns the transition function of the NFA.
      * @return the transition function
@@ -82,8 +82,8 @@ public class NFA {
      * @return the set of states with epsilon transitions removed
      */
     private Set<State> removeEpsilonStates(Set<State> states) {
-        while (states.stream().anyMatch(s-> isEpsilonState(s))) {
-            Set<State> epsilonStates = states.stream().filter(s-> isEpsilonState(s)).collect(Collectors.toSet());
+        while (states.stream().anyMatch(this::isEpsilonState)) {
+            Set<State> epsilonStates = states.stream().filter(this::isEpsilonState).collect(Collectors.toSet());
             states = states.stream().filter(s-> !isEpsilonState(s)).collect(Collectors.toSet());
             for (State state : epsilonStates) {
                 states.addAll(transitionFunction.keySet().stream().filter(t -> t.getStartState().equals(state) && t.isEpsilon()).map(transitionFunction::get).flatMap(Set::stream).collect(Collectors.toSet()));
@@ -126,7 +126,7 @@ public class NFA {
                     .map(transitionFunction::get)
                     .flatMap(Set::stream)
                     .filter(closure::add) // Add state to closure, and if it was a new state...
-                    .forEach(stack::push);   // ...add it to the stack to process its epsilon transitions.
+                    .forEach(stack::push);   //add it to the stack to process its epsilon transitions.
         }
         return closure;
     }
@@ -368,6 +368,6 @@ public class NFA {
      */
     @Override
     public String toString() {
-        return "( nfa.Alphabet: "+ alphabet.toString() + ", States: " + states.toString() + ", Start nfa.State: " + startState + ", nfa.Transition Function: " + transitionFunction.toString() + ", Final States: " + finalStates.stream().map(State::toString).collect(Collectors.joining(", ","{","}")) + ")";
+        return "(Alphabet: "+ alphabet.toString() + ", States: " + states.toString() + ", Start State: " + startState + ", Transition Function: " + transitionFunction.toString() + ", Final States: " + finalStates.stream().map(State::toString).collect(Collectors.joining(", ","{","}")) + ")";
     }
 }

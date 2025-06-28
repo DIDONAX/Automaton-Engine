@@ -1,52 +1,48 @@
-# Automaton Engine
+# NFA and Regex to NFA Converter
 
-A lightweight Java library for converting regular expressions into Non-deterministic Finite Automata (NFAs) and simulating their behavior. This project provides a simple, dependency-free implementation of core automata theory concepts, making it ideal for educational purposes and small-scale applications.
+This project provides a Java implementation for:
+- Converting regular expressions to Non-deterministic Finite Automata (NFA)
+- Manipulating and operating on NFAs (concatenation, union, star)
+- Converting NFAs to DFAs
+- Testing string acceptance by NFAs/DFAs
 
 ## Features
+- **Regex to NFA**: Uses the Shunting Yard algorithm to parse regular expressions and build corresponding NFAs.
+- **NFA Operations**: Supports concatenation, union (|), and Kleene star (*) operations.
+- **NFA to DFA**: Converts an NFA to a DFA for efficient string acceptance checking.
+- **JUnit Tests**: Comprehensive test suite for regex parsing, NFA construction, and acceptance.
 
-- **Regex to NFA Conversion**: Convert standard regular expressions into an equivalent NFA using the Shunting Yard and Thompson's construction algorithms.
-- **NFA Simulation**: Test whether an NFA accepts or rejects a given input string.
-- **Core Automata Operations**: Includes implementations for concatenation, union (or), and the Kleene star operations.
-- **DFA Conversion**: Supports converting an NFA into an equivalent Deterministic Finite Automaton (DFA).
-- **JUnit Tests**: Comes with a suite of JUnit tests to verify correctness and demonstrate usage.
+## Project Structure
+- `src/main/java/nfa/` — Source code for NFA, regex parsing, and conversion logic
+- `src/test/java/nfa/` — JUnit tests for the implementation
 
-## Usage
 
-Using the Automaton Engine is straightforward. Here's a quick example of how to build an NFA from a regex and test a string against it:
+## Example Usage
+The `Main.java` demonstrates how to:
+- Build an NFA from a regex
+- Print the NFA
+- Test string acceptance
+- Perform NFA operations (concatenation, union, star)
+- Convert an NFA to a DFA
 
 ```java
-// Import the necessary classes
-import nfa.NFA;
-import nfa.RegexToNFA;
+String regex = "(a|b)*abb";
+NFA nfaFromRegex = RegexToNFA.build(regex);
+System.out.println("NFA built from regex '(a|b)*abb':\n" + nfaFromRegex);
 
-public class Example {
-    public static void main(String[] args) {
-        // 1. Define the regular expression
-        String regex = "(a|b)*abb";
-
-        // 2. Build the NFA from the regex
-        NFA nfa = RegexToNFA.build(regex);
-
-        // 3. Check if the NFA accepts a string
-        boolean isAccepted = nfa.accepts("aabb");
-
-        System.out.println("NFA from regex: " + regex);
-        System.out.println("Accepts 'aabb'? " + isAccepted); // Outputs: true
-    }
+String[] testStrings = {"abb", "aabb", "babb", "ab", "bba"};
+for (String s : testStrings) {
+    boolean accepted = nfaFromRegex.accepts(s);
+    System.out.println("Does the NFA accept '" + s + "'? " + accepted);
 }
 ```
 
 ## Running Tests
+JUnit tests are provided in `src/test/java/nfa/RegexToNFATest.java`.
+To run the tests, use your IDE's test runner or a build tool like Gradle or Maven (if configured).
 
-This project uses JUnit 5 for testing. To run the tests, you can use your IDE (like IntelliJ or Eclipse) or run them from the command line with Maven or Gradle.
+## .gitignore
+A `.gitignore` file is included to exclude build outputs, IDE files, and other non-source files from your repository.
 
-From your IDE:
-1.  Make sure you have the JUnit 5 library added to your project's dependencies.
-2.  Navigate to the `test/nfa/RegexToNFATest.java` file.
-3.  Right-click on the file and select "Run 'RegexToNFATest'".
-
-## Future Improvements
-
-- **Enhanced Regex Syntax**: Add support for more advanced regex features like `+` (one or more), `?` (zero or one), and character classes (`[0-9]`).
-- **Robust Error Handling**: Implement custom exceptions for invalid regex syntax.
-- **Visualization**: Add functionality to export an automaton's structure to a format like Graphviz DOT for visualization.
+## License
+This project is provided for educational purposes. Feel free to use and modify it as needed. 

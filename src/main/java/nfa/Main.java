@@ -13,26 +13,22 @@ public class Main {
      * @param args command-line arguments (not used)
      */
     public static void main(String[] args) {
-        // --- Test 1: Build an NFA from a regular expression and print it ---
+        //TODO: MAKE DFA CONVERSION CLEANER
+        //TODO: ADD GUI
+
+        //Test 1: Build an NFA from a regular expression and print it
         String regex = "(a|b)*abb";
         NFA nfaFromRegex = RegexToNFA.build(regex);
         System.out.println("NFA built from regex '(a|b)*abb':\n" + nfaFromRegex);
 
-        // --- Test 2: Check if the NFA accepts certain strings ---
+        //Test 2: Check if the NFA accepts certain strings
         String[] testStrings = {"abb", "aabb", "babb", "ab", "bba"};
         for (String s : testStrings) {
             boolean accepted = nfaFromRegex.accepts(s);
             System.out.println("Does the NFA accept '" + s + "'? " + accepted);
         }
-
-        // --- Test 3: Convert regex to postfix and print the expression tree ---
-        String postfix = RegexToNFA.toPostFix(RegexToNFA.addConcatination(regex));
-        System.out.println("Postfix notation for '(a|b)*abb': " + postfix);
-        Node exprTree = RegexToNFA.toExprTree(postfix);
-        System.out.println("Expression tree for '(a|b)*abb':");
-        RegexToNFA.printTree(exprTree);
-
-        // --- Test 4: Demonstrate NFA operations: star, or, and concatenation ---
+        
+        //Test 4: Demonstrate NFA operations: star, or, and concatenation
         NFA nfaA = RegexToNFA.build("a");
         NFA nfaB = RegexToNFA.build("b");
         NFA concatNFA = NFA.concatinateNFA(nfaA, nfaB);
@@ -42,7 +38,7 @@ public class Main {
         NFA starNFA = NFA.starOperation(nfaA);
         System.out.println("NFA for star 'a*':\n" + starNFA);
 
-        // --- Test 5: Convert an NFA to a DFA and print it ---
+        //Test 5: Convert an NFA to a DFA and print it
         NFA dfa = nfaFromRegex.toDFA();
         System.out.println("DFA converted from NFA for '(a|b)*abb':\n" + dfa);
     }

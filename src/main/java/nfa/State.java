@@ -48,4 +48,5 @@ public class State {
         }
         return result;
     }
+    public String getName() {return name;}
 }

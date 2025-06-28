@@ -84,48 +84,6 @@ public class RegexToNFA {
     }
 
     /**
-     * Converts a postfix regular expression to an expression tree.
-     * @param postfix the postfix regular expression
-     * @return the root node of the expression tree
-     */
-    public static Node toExprTree(String postfix) {
-            String newPostfix = addConcatination(postfix);
-            Stack<Node> stack = new Stack<>();
-            Node root = null;
-            for (int i = 0; i < postfix.length(); i++) {
-                char ch = postfix.charAt(i);
-                if (isOperand(ch)) {
-                    stack.push(new Node(ch));
-                } else if (ch == '|' || ch == '.') {
-                    Node operatorNode = new Node(ch);
-                    operatorNode.right = stack.pop();
-                    operatorNode.left = stack.pop();
-                    stack.push(operatorNode);
-                } else {
-                    Node operatorNode = new Node('*');
-                    operatorNode.left = stack.pop();
-                    stack.push(operatorNode);
-                }
-                root = stack.peek();
-            }
-            return root;
-    }
-
-    /**
-     * Prints the structure of an expression tree to the console.
-     * @param root the root node of the tree
-     */
-    public static void printTree(Node root) {
-        if (root == null) return;
-        if (root.left != null) {
-        }
-        if (root.right != null) {
-        }
-        printTree(root.left);
-        printTree(root.right);
-    }
-
-    /**
      * Builds an NFA from a regular expression string.
      * @param input the regular expression
      * @return the constructed NFA

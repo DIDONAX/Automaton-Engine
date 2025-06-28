@@ -56,7 +56,7 @@ public class Transition {
      */
     @Override
     public String toString() {
-        return "("+ startState.toString() + ", " + symbol + ")";
+        return "("+ startState.toString() + ", " + (isEpsilon() ? "Epsilon" : Character.toString(symbol)) + ")";
     }
 
     /**
