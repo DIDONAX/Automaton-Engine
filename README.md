@@ -1,4 +1,4 @@
-# Automaton Engine
+# Automaton Engine (Work in Progress)
 
 This project provides a Java implementation for:
 - Converting regular expressions to Non-deterministic Finite Automata (NFA)

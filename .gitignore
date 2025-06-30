@@ -59,3 +59,9 @@ bin/
 ### Mac OS ###
 .DS_Store
 Thumbs.db
+
+# IntelliJ IDEA files
+*.iml
+
+# IDE-specific files
+.idea/
