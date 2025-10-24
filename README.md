@@ -1,5 +1,6 @@
-# Automaton Engine (Work in Progress)
+# Automaton Engine (Needs Complete Rework)
 
+Edit: i did this prior to Algorithms and Data Structures course so there is a lot of garbage like O(n^3) algorithms, might as well redo the whole thing
 This project provides a Java implementation for:
 - Converting regular expressions to Non-deterministic Finite Automata (NFA)
 - Manipulating and operating on NFAs (concatenation, union, star)
